@@ -7,6 +7,7 @@
 #include <fstream>
 
 typedef struct Node {
+  char valid;
   int key;
   int data_index;
   int height;
@@ -19,11 +20,8 @@ class AvlDatabase
 {
   public:
     AvlDatabase(std::string data_path, std::string tree_path) {
-      this->root_pos = -1;
-      this->data_count = data_file.tellg() / sizeof(T);
-
-      data_file(data_path, std::ios_base::binary | std::ios_base::app);
-      tree_file(tree_path, std::ios_base::binary | std::ios_base::app);
+      this->data_file = std::fstream(data_path, std::ios_base::binary | std::ios_base::app);
+      this->tree_file = std::fstream(tree_path, std::ios_base::binary | std::ios_base::app);
 
       // data_file.write((char*)&data, sizeof(data));
       // T data;
@@ -32,9 +30,16 @@ class AvlDatabase
       // std::cout << data.name << " " << data.ra;
     }
 
+    ~AvlDatabase() {
+      // TODO: remove invalid data and node blocks
+      // ...
+      
+      this->data_file.close();
+      this->tree_file.close();
+    }
+
     void add (const K &key, const T &info) {
-      add_data(info);
-      add_data_to_tree(key, info, this->root_pos);
+      add_recursive(key, info, 0);
     }
 
     void remove (const K &key) {
@@ -47,33 +52,49 @@ class AvlDatabase
 
   private:
     int data_count;
+
+    // streampos last_data_pos;
+    // streampos last_tree_pos;
+
     std::fstream data_file;
     std::fstream tree_file;
 
     int root_pos;
 
-    void add_data_to_tree(const K &key, const T &info, int current_pos) {
+    /**
+     * Adds data recursively on the tree
+     */
+    void add_recursive(const K &key, const T &info, int current_pos) {
+      // If tree is empty
+      if (tree_file.tellg() == 0) {
+        int data_index = add_data(info);
+        int node_index = add_node(key, data_index);
+        return;
+      }
+
       // Get current node
       Node node = read_node(current_pos);
 
       // Check current node key to find where to insert
-      if (node.key == current_key) {
-        throw std::bad_argument("Info already on tree");
-      } else if (node.key > current_key) {
+      if (key == node.key) {
+        throw std::invalid_argument("Info already on tree");
+      } else if (key > node.key) {
         // Insert to right
         if (node.right == -1) {
-          int node_index = add_node(key, this.data_count - 1);
+          int data_index = add_data(info);
+          int node_index = add_node(key, data_index);
           node.right = node_index;
         } else {
-          add_data_to_tree(key, info, node.right)
+          add_recursive(key, info, node.right);
         }
-      } else if (node.key < current_key) {
+      } else if (key < node.key) {
         // Insert to left
         if (node.left == -1) {
-          int node_index = add_node(key, this.data_count - 1);
+          int data_index = add_data(info);
+          int node_index = add_node(key, data_index);
           node.left = node_index;
         } else {
-          add_data_to_tree(key, info, node.left)
+          add_recursive(key, info, node.left);
         }
       }
 
@@ -81,40 +102,48 @@ class AvlDatabase
       // ...
     }
 
-    void add_data(const T &data) {
-      // TODO: seekp end of file
-      // data_file.seekp(ios::end);
-      data_file.write((char*)&data);
-      data_file.write((char*)&data);
-      this->data_count++;
+    /**
+     * Adds a data to data_file and returns its index
+    **/
+    int add_data(const T &data) {
+      this->data_file.seekp(0, std::ios_base::end);
+      this->data_file << reinterpret_cast<char*>(&data);
+      this->data_file.flush();
+
+      return (this->data_file.tellg() / sizeof(T)) - 1;
     }
 
-    void add_node(const K &key, int data_index) {
-      Node node;
-      node.key = key;
-      node.data_index = data_index;
-      node.height = 0;
-      node.left = -1;
-      node.right = -1;
+    /**
+     * Adds a node to tree_file and returns its index
+     */
+    int add_node(const K &key, int data_index) {
+      Node* node_ptr = new Node();
 
-      // TODO: find where to insert node
-      // ...
+      // Set node attributes
+      node_ptr->valid = 1;
+      node_ptr->key = key;
+      node_ptr->data_index = data_index;
+      node_ptr->height = 0;
+      node_ptr->left = -1;
+      node_ptr->right = -1;
+      
+      this->tree_file.seekp(0, std::ios_base::end);
+      this->tree_file << reinterpret_cast<char*>(node_ptr);
+      this->tree_file.flush();
 
-      tree_file.write((char*)&node)
-
-      // TODO: return where the node was inserted
-      // return ...
+      return (this->tree_file.tellg() / sizeof(T)) - 1;
     }
 
-    Node read_node(streampos pos) {
-      Node node;
-      tree_file.seekp(pos);
-      tree_file.read(&node.key, sizeof(int));
-      tree_file.read(&node.data_index, sizeof(int));
-      tree_file.read(&node.height, sizeof(int));
-      tree_file.read(&node.left, sizeof(int));
-      tree_file.read(&node.right, sizeof(int))
-      return node;;
+    /**
+     * Reads node from tree_file at specified position 
+     */
+    Node read_node(int pos) {
+      char* node_chars;
+
+      this->tree_file.seekg(pos * sizeof(T), std::ios_base::beg);
+      this->tree_file >> node_chars;
+
+      return *reinterpret_cast<Node*>(node_chars);
     }
 
 };
