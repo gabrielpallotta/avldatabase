@@ -194,8 +194,10 @@ class AvlDatabase
       data_file.seekp(0, std::ios_base::end);
       data_file << reinterpret_cast<char*>(&data);
       data_file.flush();
+      
+      return (data_file.tellg() / sizeof(T)) - 1;
+    }
 
-      return (this->data_file.tellg() / sizeof(T)) - 1;
     }
 
     /**
