@@ -198,6 +198,15 @@ class AvlDatabase
       return (data_file.tellg() / sizeof(T)) - 1;
     }
 
+    /**
+     * Reads node from data_file at specified position 
+     */
+    T read_data(int pos) {
+      char* data_chars;
+      data_file.seekp(pos * sizeof(T), std::ios_base::beg);
+      data_file >> data_chars;
+
+      return *reinterpret_cast<T*>(data_chars);
     }
 
     /**
