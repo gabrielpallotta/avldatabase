@@ -158,24 +158,24 @@ class AvlDatabase
     }
     
     /** 
-     * Writes root position at the start of data_file
+     * Writes root position at the start of tree_file
     */
     void write_root_pos(int pos) {
-      data_file.seekp(0, std::ios_base::beg);
-      data_file << pos;
-      data_file.flush();
+      tree_file.seekp(0, std::ios::beg);
+      tree_file << pos;
+      tree_file.flush();
     }
 
     /**
-     * Reads root position from the start of data_file and returns it
+     * Reads root position from the start of tree_file and returns it
     */
     int read_root_pos() {
       if (is_empty()) {
         return -1;
       } else {
-        data_file.seekg(0, std::ios_base::beg);
+        tree_file.seekg(0, std::ios::beg);
         int pos;
-        data_file >> pos;
+        tree_file >> pos;
         return pos;
       }
     }
