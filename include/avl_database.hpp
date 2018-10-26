@@ -51,6 +51,7 @@ class AvlDatabase
     }
 
   private:
+    const int tree_file_offset = sizeof(int);
     int data_count;
 
     // streampos last_data_pos;
@@ -65,10 +66,11 @@ class AvlDatabase
      * Adds data recursively on the tree
      */
     void add_recursive(const K &key, const T &info, int current_pos) {
-      // If tree is empty
+      // If tree is empty, first insertion
       if (tree_file.tellg() == 0) {
-        int data_index = add_data(info);
-        int node_index = add_node(key, data_index);
+        write_root_pos(0);
+        int data_index = write_data(info);
+        write_node(key, data_index);
         return;
       }
 
@@ -102,6 +104,18 @@ class AvlDatabase
       // ...
     }
 
+    void write_root_pos(int pos) {
+      this->data_file.seekp(0, std::ios_base::beg);
+      this->data_file << pos;
+      this->data_file.flush();
+    }
+
+    int read_root_pos() {
+      this->data_file.seekg(0, std::ios_base::beg);
+      int pos;
+      this->data_file >> pos;
+      return pos;
+    }
     /**
      * Adds a data to data_file and returns its index
     **/
@@ -140,7 +154,7 @@ class AvlDatabase
     Node read_node(int pos) {
       char* node_chars;
 
-      this->tree_file.seekg(pos * sizeof(T), std::ios_base::beg);
+      this->tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios_base::beg);
       this->tree_file >> node_chars;
 
       return *reinterpret_cast<Node*>(node_chars);
