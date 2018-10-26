@@ -31,7 +31,7 @@ class AvlDatabase
     }
 
     ~AvlDatabase() {
-      // TODO: remove invalid data and node blocks
+      // TODO: remove invalid data and node blocks before writing to files
       // ...
       
       this->data_file.close();
@@ -83,8 +83,8 @@ class AvlDatabase
       } else if (key > node.key) {
         // Insert to right
         if (node.right == -1) {
-          int data_index = add_data(info);
-          int node_index = add_node(key, data_index);
+          int data_index = write_data(info);
+          int node_index = write_node(key, data_index);
           node.right = node_index;
         } else {
           add_recursive(key, info, node.right);
@@ -92,8 +92,8 @@ class AvlDatabase
       } else if (key < node.key) {
         // Insert to left
         if (node.left == -1) {
-          int data_index = add_data(info);
-          int node_index = add_node(key, data_index);
+          int data_index = write_data(info);
+          int node_index = write_node(key, data_index);
           node.left = node_index;
         } else {
           add_recursive(key, info, node.left);
@@ -116,10 +116,11 @@ class AvlDatabase
       this->data_file >> pos;
       return pos;
     }
+
     /**
-     * Adds a data to data_file and returns its index
+     * Writes a data at the end of data_file and returns its index
     **/
-    int add_data(const T &data) {
+    int write_data(const T &data) {
       this->data_file.seekp(0, std::ios_base::end);
       this->data_file << reinterpret_cast<char*>(&data);
       this->data_file.flush();
@@ -128,12 +129,12 @@ class AvlDatabase
     }
 
     /**
-     * Adds a node to tree_file and returns its index
+     * Writes a node at the end of tree_file and returns its index
      */
-    int add_node(const K &key, int data_index) {
+    int write_node(const K &key, int data_index) {
       Node* node_ptr = new Node();
 
-      // Set node attributes
+      // Set node default attributes
       node_ptr->valid = 1;
       node_ptr->key = key;
       node_ptr->data_index = data_index;
