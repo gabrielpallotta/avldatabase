@@ -6,6 +6,9 @@
 #include <iostream>
 #include <fstream>
 
+/**
+ * Struct for Node stored in a binary file
+ */
 typedef struct Node {
   char valid;
   int key;
@@ -15,10 +18,19 @@ typedef struct Node {
   int right;
 } Node;
 
+/**
+ * Implementation of a database using AvlTree concepts and binary files
+ * 
+ * @tparam K the type of the key used to compare infos
+ * @tparam T the type of the info stored
+ */
 template <typename K, typename T>
 class AvlDatabase
 {
   public:
+    /** 
+     * @todo write stuff here
+    */
     AvlDatabase(std::string data_path, std::string tree_path) {
       this->data_file = std::fstream(data_path, std::ios_base::binary | std::ios_base::app);
       this->tree_file = std::fstream(tree_path, std::ios_base::binary | std::ios_base::app);
@@ -30,6 +42,10 @@ class AvlDatabase
       // std::cout << data.name << " " << data.ra;
     }
 
+    /** 
+     * @todo write stuff here
+     * @todo remove invalid data and node blocks before writing to files
+    */
     ~AvlDatabase() {
       // TODO: remove invalid data and node blocks before writing to files
       // ...
@@ -42,7 +58,10 @@ class AvlDatabase
       add_recursive(key, info, 0);
     }
 
-    void remove (const K &key) {
+    /** 
+     * @todo write stuff here
+    */
+    void remove(const K &key) {
       
     }
 
@@ -64,6 +83,8 @@ class AvlDatabase
 
     /**
      * Adds data recursively on the tree
+     * First current_pos passed is root_pos, if the tree is empty, this method
+     * cannot be called
      */
     void add_recursive(const K &key, const T &info, int current_pos) {
       // If tree is empty, first insertion
@@ -104,12 +125,19 @@ class AvlDatabase
       // ...
     }
 
+    
+    /** 
+     * Writes root position at the start of data_file
+    */
     void write_root_pos(int pos) {
       this->data_file.seekp(0, std::ios_base::beg);
       this->data_file << pos;
       this->data_file.flush();
     }
 
+    /**
+     * Reads root position from the start of data_file and returns it
+    */
     int read_root_pos() {
       this->data_file.seekg(0, std::ios_base::beg);
       int pos;
