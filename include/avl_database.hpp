@@ -32,8 +32,8 @@ class AvlDatabase
      * @todo write stuff here
     */
     AvlDatabase(std::string data_path, std::string tree_path) {
-      this->data_file = std::fstream(data_path, std::ios_base::binary | std::ios_base::app);
-      this->tree_file = std::fstream(tree_path, std::ios_base::binary | std::ios_base::app);
+      data_file = std::fstream(data_path, std::ios_base::binary | std::ios_base::app);
+      tree_file = std::fstream(tree_path, std::ios_base::binary | std::ios_base::app);
 
       // data_file.write((char*)&data, sizeof(data));
       // T data;
@@ -50,8 +50,8 @@ class AvlDatabase
       // TODO: remove invalid data and node blocks before writing to files
       // ...
       
-      this->data_file.close();
-      this->tree_file.close();
+      data_file.close();
+      tree_file.close();
     }
 
     void add (const K &key, const T &info) {
@@ -130,9 +130,9 @@ class AvlDatabase
      * Writes root position at the start of data_file
     */
     void write_root_pos(int pos) {
-      this->data_file.seekp(0, std::ios_base::beg);
-      this->data_file << pos;
-      this->data_file.flush();
+      data_file.seekp(0, std::ios_base::beg);
+      data_file << pos;
+      data_file.flush();
     }
 
     /**
@@ -149,9 +149,9 @@ class AvlDatabase
      * Writes a data at the end of data_file and returns its index
     **/
     int write_data(const T &data) {
-      this->data_file.seekp(0, std::ios_base::end);
-      this->data_file << reinterpret_cast<char*>(&data);
-      this->data_file.flush();
+      data_file.seekp(0, std::ios_base::end);
+      data_file << reinterpret_cast<char*>(&data);
+      data_file.flush();
 
       return (this->data_file.tellg() / sizeof(T)) - 1;
     }
@@ -183,8 +183,8 @@ class AvlDatabase
     Node read_node(int pos) {
       char* node_chars;
 
-      this->tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios_base::beg);
-      this->tree_file >> node_chars;
+      tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios_base::beg);
+      tree_file >> node_chars;
 
       return *reinterpret_cast<Node*>(node_chars);
     }
