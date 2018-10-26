@@ -54,8 +54,18 @@ class AvlDatabase
       tree_file.close();
     }
 
-    void add (const K &key, const T &info) {
-      add_recursive(key, info, 0);
+    /** 
+     * @todo write stuff here
+    */
+    void add(const K &key, const T &info) {      
+      // If tree is empty, first insertion
+      if (is_empty()) {
+        write_root_pos(0);
+        int data_index = write_data(info);
+        write_node(key, data_index);
+      } else {
+        add_recursive(key, info, read_root_pos());
+      }
     }
 
     /** 
@@ -100,14 +110,6 @@ class AvlDatabase
      * cannot be called
      */
     void add_recursive(const K &key, const T &info, int current_pos) {
-      // If tree is empty, first insertion
-      if (tree_file.tellg() == 0) {
-        write_root_pos(0);
-        int data_index = write_data(info);
-        write_node(key, data_index);
-        return;
-      }
-
       // Get current node
       Node node = read_node(current_pos);
 
@@ -117,18 +119,14 @@ class AvlDatabase
       } else if (key > node.key) {
         // Insert to right
         if (node.right == -1) {
-          int data_index = write_data(info);
-          int node_index = write_node(key, data_index);
-          node.right = node_index;
+          node.right = write_data_node(key, info);
         } else {
           add_recursive(key, info, node.right);
         }
       } else if (key < node.key) {
         // Insert to left
         if (node.left == -1) {
-          int data_index = write_data(info);
-          int node_index = write_node(key, data_index);
-          node.left = node_index;
+          node.left = write_data_node(key, info);
         } else {
           add_recursive(key, info, node.left);
         }
@@ -154,6 +152,16 @@ class AvlDatabase
       } else if (key < node.key) {
         return get_info_recursive(key, node.left);
       }
+    }
+
+    /**
+     * Writes data and node, respectively, to data_file and tree_file
+     */
+    int write_data_node(const K& key, const T& info) {
+      int data_index = write_data(info);
+      Node* new_node_ptr = new Node(){ 1, key, data_index, 0, -1, -1};
+      int node_index = write_node(new_node_ptr);
+      return node_index;
     }
     
     /** 
@@ -193,22 +201,12 @@ class AvlDatabase
     /**
      * Writes a node at the end of tree_file and returns its index
      */
-    int write_node(const K &key, int data_index) {
-      Node* node_ptr = new Node();
+    int write_node(Node* node_ptr) {
+      tree_file.seekp(0, std::ios_base::end);
+      tree_file << reinterpret_cast<char*>(node_ptr);
+      tree_file.flush();
 
-      // Set node default attributes
-      node_ptr->valid = 1;
-      node_ptr->key = key;
-      node_ptr->data_index = data_index;
-      node_ptr->height = 0;
-      node_ptr->left = -1;
-      node_ptr->right = -1;
-      
-      this->tree_file.seekp(0, std::ios_base::end);
-      this->tree_file << reinterpret_cast<char*>(node_ptr);
-      this->tree_file.flush();
-
-      return (this->tree_file.tellg() / sizeof(T)) - 1;
+      return tree_file_offset + (tree_file.tellg() / sizeof(T)) - 1;
     }
 
     /**
