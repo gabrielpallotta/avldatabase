@@ -47,7 +47,6 @@ class AvlDatabase
      * @todo remove invalid data and node blocks before writing to files
     */
     ~AvlDatabase() {
-      // TODO: remove invalid data and node blocks before writing to files
       // ...
       
       data_file.close();
@@ -94,15 +93,9 @@ class AvlDatabase
 
   private:
     const int tree_file_offset = sizeof(int);
-    int data_count;
-
-    // streampos last_data_pos;
-    // streampos last_tree_pos;
 
     std::fstream data_file;
     std::fstream tree_file;
-
-    int root_pos;
 
     /**
      * Adds data recursively on the tree
@@ -189,7 +182,7 @@ class AvlDatabase
 
     /**
      * Writes a data at the end of data_file and returns its index
-    **/
+     */
     int write_data(const T &data) {
       data_file.seekp(0, std::ios_base::end);
       data_file << reinterpret_cast<char*>(&data);
