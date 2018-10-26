@@ -32,8 +32,8 @@ class AvlDatabase
      * @todo write stuff here
     */
     AvlDatabase(std::string data_path, std::string tree_path) {
-      data_file = std::fstream(data_path, std::ios_base::binary | std::ios_base::app);
-      tree_file = std::fstream(tree_path, std::ios_base::binary | std::ios_base::app);
+      data_file = std::fstream(data_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
+      tree_file = std::fstream(tree_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
 
       // data_file.write((char*)&data, sizeof(data));
       // T data;
@@ -60,8 +60,7 @@ class AvlDatabase
       // If tree is empty, first insertion
       if (is_empty()) {
         write_root_pos(0);
-        int data_index = write_data(info);
-        write_node(key, data_index);
+        write_data_node(key, info);
       } else {
         add_recursive(key, info, read_root_pos());
       }
@@ -152,8 +151,8 @@ class AvlDatabase
      */
     int write_data_node(const K& key, const T& info) {
       int data_index = write_data(info);
-      Node* new_node_ptr = new Node(){ 1, key, data_index, 0, -1, -1};
-      int node_index = write_node(new_node_ptr);
+      Node new_node = { 1, key, data_index, 0, -1, -1};
+      int node_index = write_node(new_node);
       return node_index;
     }
     
@@ -161,8 +160,9 @@ class AvlDatabase
      * Writes root position at the start of tree_file
     */
     void write_root_pos(int pos) {
+      tree_file.clear();
       tree_file.seekp(0, std::ios::beg);
-      tree_file << pos;
+      tree_file.write(reinterpret_cast<char*>(&pos), sizeof(int));
       tree_file.flush();
     }
 
@@ -184,8 +184,11 @@ class AvlDatabase
      * Writes a data at the end of data_file and returns its index
      */
     int write_data(const T &data) {
-      data_file.seekp(0, std::ios_base::end);
-      data_file << reinterpret_cast<char*>(&data);
+      T* data_ptr = new T(data);
+      
+      tree_file.clear();
+      data_file.seekp(0, std::ios::end);
+      data_file.write(reinterpret_cast<char*>(data_ptr), sizeof(T));
       data_file.flush();
       
       return (data_file.tellg() / sizeof(T)) - 1;
@@ -195,19 +198,24 @@ class AvlDatabase
      * Reads node from data_file at specified position 
      */
     T read_data(int pos) {
-      char* data_chars;
-      data_file.seekp(pos * sizeof(T), std::ios_base::beg);
-      data_file >> data_chars;
+      T data;
 
-      return *reinterpret_cast<T*>(data_chars);
+      tree_file.clear();
+      data_file.seekp(pos * sizeof(T), std::ios::beg);
+      data_file.read(reinterpret_cast<char*>&data, sizeof(T));
+
+      return data;
     }
 
     /**
      * Writes a node at the end of tree_file and returns its index
      */
-    int write_node(Node* node_ptr) {
-      tree_file.seekp(0, std::ios_base::end);
-      tree_file << reinterpret_cast<char*>(node_ptr);
+    int write_node(Node node) {
+      Node* node_ptr = new Node(node);
+      
+      tree_file.clear();
+      tree_file.seekp(0, std::ios::end);
+      tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
       tree_file.flush();
 
       return tree_file_offset + (tree_file.tellg() / sizeof(T)) - 1;
@@ -217,12 +225,13 @@ class AvlDatabase
      * Reads node from tree_file at specified position 
      */
     Node read_node(int pos) {
-      char* node_chars;
+      Node node;
 
-      tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios_base::beg);
-      tree_file >> node_chars;
-
-      return *reinterpret_cast<Node*>(node_chars);
+      tree_file.clear();
+      tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios::beg);
+      tree_file.read(reinterpret_cast<char*>(&node), sizeof(Node));
+      
+      return node;
     }
 
 };
