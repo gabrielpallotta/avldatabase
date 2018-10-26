@@ -65,9 +65,22 @@ class AvlDatabase
       
     }
 
-    bool has_info (const K &key, const T &info) {
-      
+    /** 
+     * @todo write stuff here
+    */
+    T get_info(const K &key) {
+      return get_info_recursive(key, read_root_pos());
     }
+
+    /**
+     * Check if the tree is empty
+     * @return true if the tree is empty
+     * @return false if the tree is not empty
+     */
+    bool is_empty() {
+      return tree_file.tellg() == 0;
+    }
+
 
   private:
     const int tree_file_offset = sizeof(int);
@@ -125,6 +138,23 @@ class AvlDatabase
       // ...
     }
 
+    /**
+     * Gets info recursively from the tree 
+     */
+    T get_info_recursive(const K &key, int current_pos) {
+      if (current_pos == -1) {
+        throw std::invalid_argument("No info matches key passed to get_info");
+      }
+
+      Node node = read_node(current_pos);
+      if (key == node.key) {
+        return read_data(node.data_index);
+      } else if (key > node.key) {
+        return get_info_recursive(key, node.right);
+      } else if (key < node.key) {
+        return get_info_recursive(key, node.left);
+      }
+    }
     
     /** 
      * Writes root position at the start of data_file
@@ -139,10 +169,14 @@ class AvlDatabase
      * Reads root position from the start of data_file and returns it
     */
     int read_root_pos() {
-      this->data_file.seekg(0, std::ios_base::beg);
-      int pos;
-      this->data_file >> pos;
-      return pos;
+      if (is_empty()) {
+        return -1;
+      } else {
+        data_file.seekg(0, std::ios_base::beg);
+        int pos;
+        data_file >> pos;
+        return pos;
+      }
     }
 
     /**
