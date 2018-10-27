@@ -223,7 +223,7 @@ class AvlDatabase
       tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
       tree_file.flush();
 
-      return (tree_file.tellg() - tree_file_offset) / sizeof(T) - 1;
+      return (tree_file.tellg() - tree_file_offset) / sizeof(Node) - 1;
     }
 
     /**
@@ -233,7 +233,7 @@ class AvlDatabase
       Node node;
 
       tree_file.clear();
-      tree_file.seekg(tree_file_offset + pos * sizeof(T), std::ios::beg);
+      tree_file.seekg(tree_file_offset + pos * sizeof(Node), std::ios::beg);
       tree_file.read(reinterpret_cast<char*>(&node), sizeof(Node));
       
       return node;
