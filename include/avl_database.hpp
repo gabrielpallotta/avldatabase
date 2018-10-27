@@ -115,6 +115,7 @@ class AvlDatabase
         // Insert to right
         if (node.right == -1) {
           node.right = write_data_node(key, info);
+          update_node(current_pos, node);
         } else {
           add_recursive(key, info, node.right);
         }
@@ -122,6 +123,7 @@ class AvlDatabase
         // Insert to left
         if (node.left == -1) {
           node.left = write_data_node(key, info);
+          update_node(current_pos, node);
         } else {
           add_recursive(key, info, node.left);
         }
@@ -235,6 +237,18 @@ class AvlDatabase
       tree_file.read(reinterpret_cast<char*>(&node), sizeof(Node));
       
       return node;
+    }
+
+    /**
+     * Overrides node at specified position with node passed as parameter
+     */
+    void update_node(int pos, Node node) {
+      Node* node_ptr = new Node(node);
+
+      tree_file.clear();
+      tree_file.seekp(tree_file_offset + pos * sizeof(Node), std::ios::beg);
+      tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
+      tree_file.flush();
     }
 
 };
