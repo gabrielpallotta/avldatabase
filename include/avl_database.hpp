@@ -13,7 +13,7 @@ typedef struct Node {
   char valid;
   int key;
   int data_index;
-  int height;
+  int balance;
   int left;
   int right;
 } Node;
@@ -65,7 +65,16 @@ class AvlDatabase
         write_root_pos(0);
         write_data_node(key, info);
       } else {
-        add_recursive(key, info, read_root_pos());
+        int root_pos = read_root_pos();
+        Node root = read_node(root_pos);
+        int balance_delta = 0;
+
+        add_recursive(key, info, root_pos, &balance_delta);
+
+        if (balance_delta != 0) {
+          root.balance += balance_delta;
+          update_node(root_pos, root);
+        }
       }
     }
 
@@ -104,7 +113,7 @@ class AvlDatabase
      * First current_pos passed is root_pos, if the tree is empty, this method
      * cannot be called
      */
-    void add_recursive(const K &key, const T &info, int current_pos) {
+    void add_recursive(const K &key, const T &info, int current_pos, int* balance_delta) {
       // Get current node
       Node node = read_node(current_pos);
 
@@ -114,21 +123,35 @@ class AvlDatabase
       } else if (key > node.key) {
         // Insert to right
         if (node.right == -1) {
+          if (node.left == -1) {
+            *balance_delta = 1;
+          }
           node.right = write_data_node(key, info);
           update_node(current_pos, node);
         } else {
-          add_recursive(key, info, node.right);
+          add_recursive(key, info, node.right, balance_delta);
+          if (balance_delta != 0) {
+            node.balance += *balance_delta;
+            update_node(current_pos, node);
+          }
         }
       } else if (key < node.key) {
         // Insert to left
         if (node.left == -1) {
+          if (node.right == -1) {
+            *balance_delta = -1;
+          }
           node.left = write_data_node(key, info);
           update_node(current_pos, node);
         } else {
-          add_recursive(key, info, node.left);
+          add_recursive(key, info, node.left, balance_delta);
+          if (balance_delta != 0) {
+            node.balance += *balance_delta;
+            update_node(current_pos, node);
+          }
         }
       }
-
+      
       // TODO: Balance the tree
       // ...
     }
