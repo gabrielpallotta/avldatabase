@@ -6,7 +6,7 @@
     {
       "label": "CMake",
       "type": "shell",
-      "command": "cmake -H. -Bbuild",
+      "command": "cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Debug",
       "windows": {
         "command": "cmake -G \"MinGW Makefiles\" -H. -Bbuild -DCMAKE_BUILD_TYPE=Debug",
       },
