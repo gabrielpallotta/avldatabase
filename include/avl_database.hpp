@@ -251,6 +251,54 @@ class AvlDatabase
       tree_file.flush();
     }
 
+    /** 
+     * Gets height of node at specified position
+     */
+    int get_node_height(int pos) {
+      if (pos == -1) {
+        return 0;
+      }
+
+      Node node = read_node(pos);
+
+      return std::max(get_node_height(node.right), get_node_height(node.left)) + 1;
+    }
+
+    /** 
+     * Gets balance of node at specified position
+     * @todo calculate balance dynamically
+     */
+    int get_node_balance(int pos) {
+      if (pos == -1) {
+        return 0;
+      }
+
+      Node node = read_node(pos);
+
+      return (get_node_height(node.left) - get_node_height(node.right));
+    }
+
+    /** 
+     * Balances node at specified position
+     */
+    void balance(int pos) {
+      Node node = read_node(pos);
+      int node_balance = get_node_balance(pos);
+      if (node_balance > 1) {
+        if (get_node_balance(node.right) < 0) {
+          rotate_double_left(pos);
+        } else {
+          rotate_left(pos);
+        }
+      } else if (node_balance < -1) {
+        if (get_node_balance(node.right) > 0) {
+          rotate_double_right(pos);
+        } else {
+          rotate_right(pos);
+        }
+      }
+    }
+
 };
 
 #endif
