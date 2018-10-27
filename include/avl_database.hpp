@@ -202,7 +202,7 @@ class AvlDatabase
 
       tree_file.clear();
       data_file.seekp(pos * sizeof(T), std::ios::beg);
-      data_file.read(reinterpret_cast<char*>&data, sizeof(T));
+      data_file.read(reinterpret_cast<char*>(&data), sizeof(T));
 
       return data;
     }
