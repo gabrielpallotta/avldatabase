@@ -30,7 +30,7 @@ class AvlDatabase
   public:
     /** 
      * @todo write stuff here
-    */
+     */
     AvlDatabase(std::string data_path, std::string tree_path) {
       // Create files if it doesn't exist
       data_file = std::fstream(data_path, std::ios::app);
@@ -48,7 +48,7 @@ class AvlDatabase
     /** 
      * @todo write stuff here
      * @todo remove invalid data and node blocks before writing to files
-    */
+     */
     ~AvlDatabase() {
       // ...
       
@@ -58,7 +58,7 @@ class AvlDatabase
 
     /** 
      * @todo write stuff here
-    */
+     */
     void add(const K &key, const T &info) {      
       // If tree is empty, first insertion
       if (is_empty()) {
@@ -81,14 +81,14 @@ class AvlDatabase
 
     /** 
      * @todo write stuff here
-    */
+     */
     void remove(const K &key) {
       
     }
 
     /** 
      * @todo write stuff here
-    */
+     */
     T get_info(const K &key) {
       return get_info_recursive(key, read_root_pos());
     }
