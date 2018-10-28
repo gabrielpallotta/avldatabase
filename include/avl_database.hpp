@@ -275,6 +275,28 @@ class AvlDatabase
     }
 
     /** 
+     * Swap nodes of specified positions physically on tree_file
+     */
+    void swap_nodes(int pos_a, int pos_b) {
+      Node node_a;
+      if (pos_a == -1) {
+        node_a.valid = -1;
+      } else {
+        node_a = read_node(pos_a);
+      }
+      
+      Node node_b;
+      if (pos_b == -1) {
+        node_b.valid = -1;
+      } else {
+        node_b = read_node(pos_b);
+      }
+
+      update_node(pos_a, node_b);
+      update_node(pos_b, node_a);
+    }
+
+    /** 
      * Gets height of node at specified position
      */
     int get_node_height(int pos) {
@@ -288,8 +310,8 @@ class AvlDatabase
     }
 
     /** 
+     * @deprecated node balance is calculated dynamically
      * Gets balance of node at specified position
-     * @todo calculate balance dynamically
      */
     int get_node_balance(int pos) {
       if (pos == -1) {
@@ -304,24 +326,86 @@ class AvlDatabase
     /** 
      * Balances node at specified position
      */
-    void balance(int pos) {
+    void balance_node(int pos) {
       Node node = read_node(pos);
-      int node_balance = get_node_balance(pos);
-      if (node_balance > 1) {
-        if (get_node_balance(node.right) < 0) {
+      if (node.balance > 1) {
+        if (read_node(node.right).balance < 0) {
           rotate_double_left(pos);
         } else {
           rotate_left(pos);
         }
-      } else if (node_balance < -1) {
-        if (get_node_balance(node.right) > 0) {
+      } else if (node.balance < -1) {
+        if (read_node(node.right).balance > 0) {
           rotate_double_right(pos);
         } else {
           rotate_right(pos);
         }
       }
     }
+    
+    /** 
+     * Applies left rotation to node at given position
+     */
+    void rotate_left(int pos) {
+      Node old_root = read_node(pos);
 
+      swap_nodes(pos, old_root.right);
+
+      int old_root_pos = old_root.right;
+      Node new_root = read_node(pos);
+      
+      int new_root_left_pos = new_root.left;
+
+      new_root.left = old_root_pos;
+      old_root.right = new_root_left_pos;
+
+      old_root.balance = old_root.balance - 1 - std::max(new_root.balance, 0);
+      new_root.balance = new_root.balance - 1 + std::min(old_root.balance, 0);
+
+      update_node(pos, new_root);
+      update_node(old_root_pos, old_root);
+    }
+
+    /** 
+     * Applies right rotation to node at given position
+     */
+    void rotate_right(int pos) {
+      Node old_root = read_node(pos);
+
+      swap_nodes(pos, old_root.left);
+
+      int old_root_pos = old_root.left;
+      Node new_root = read_node(pos);
+      
+      int new_root_right_pos = new_root.right;
+
+      new_root.right = old_root_pos;
+      old_root.left = new_root_right_pos;
+
+      old_root.balance = old_root.balance + 1 - std::min(new_root.balance, 0);
+      new_root.balance = new_root.balance + 1 + std::max(old_root.balance, 0);
+
+      update_node(pos, new_root);
+      update_node(old_root_pos, old_root);
+    }
+
+    /** 
+     * Applies double left rotation to node at given position
+     */
+    void rotate_double_left(int pos) {
+      Node node = read_node(pos);
+      rotate_right(node.right);
+      rotate_left(pos);
+    }
+
+    /** 
+     * Applies right rotation to node at given position
+     */
+    void rotate_double_right(int pos) {
+      Node node = read_node(pos);
+      rotate_left(node.left);
+      rotate_right(pos);
+    }
 };
 
 #endif
