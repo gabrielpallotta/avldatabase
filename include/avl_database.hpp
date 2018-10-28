@@ -66,15 +66,16 @@ class AvlDatabase
         write_data_node(key, info);
       } else {
         int root_pos = read_root_pos();
-        Node root = read_node(root_pos);
         int balance_delta = 0;
 
         add_recursive(key, info, root_pos, &balance_delta);
 
         if (balance_delta != 0) {
+          Node root = read_node(root_pos);
           root.balance += balance_delta;
           update_node(root_pos, root);
         }
+        balance_node(root_pos);
       }
     }
 
@@ -134,6 +135,7 @@ class AvlDatabase
             node.balance += *balance_delta;
             update_node(current_pos, node);
           }
+          balance_node(current_pos);
         }
       } else if (key < node.key) {
         // Insert to left
@@ -149,11 +151,9 @@ class AvlDatabase
             node.balance += *balance_delta;
             update_node(current_pos, node);
           }
+          balance_node(current_pos);
         }
       }
-      
-      // TODO: Balance the tree
-      // ...
     }
 
     /**
