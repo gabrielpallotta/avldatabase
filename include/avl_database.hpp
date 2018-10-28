@@ -29,7 +29,9 @@ class AvlDatabase
 {
   public:
     /** 
-     * @todo write stuff here
+     * AvlDatabase constructor
+     * @param data_path path to the data binary file
+     * @param tree_path path to the tree binary file
      */
     AvlDatabase(std::string data_path, std::string tree_path) {
       // Create files if it doesn't exist
@@ -46,7 +48,9 @@ class AvlDatabase
     }
 
     /** 
-     * @todo write stuff here
+     * AvlDatabase destructor
+     * Removes invalid data and node blocks from the binary files and closes 
+     * their streams
      * @todo remove invalid data and node blocks before writing to files
      */
     ~AvlDatabase() {
@@ -57,7 +61,10 @@ class AvlDatabase
     }
 
     /** 
-     * @todo write stuff here
+     * Add new information to the tree
+     * @param key Key of the information (must be unique)
+     * @param info The information that will be inserted
+     * @throws invalid_argument If another information has the same key
      */
     void add(const K &key, const T &info) {      
       // If tree is empty, first insertion
@@ -399,7 +406,7 @@ class AvlDatabase
     }
 
     /** 
-     * Applies right rotation to node at given position
+     * Applies double right rotation to node at given position
      */
     void rotate_double_right(int pos) {
       Node node = read_node(pos);
