@@ -92,6 +92,13 @@ class AvlDatabase
       return get_info_recursive(key, read_root_pos());
     }
 
+    /** 
+     * Gets the tree height 
+     */
+    int get_height() {
+      return get_node_height(read_root_pos());
+    }
+
     /**
      * Check if the tree is empty
      * @return true if the tree is empty
