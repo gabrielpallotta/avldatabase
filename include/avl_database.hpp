@@ -164,7 +164,9 @@ class AvlDatabase
       }
 
       // Balance the node
-      balance_node(current_pos);
+      if (balance_node(current_pos)) {
+        *balance_delta = 0;
+      }
     }
 
     /**
@@ -335,9 +337,10 @@ class AvlDatabase
     }
 
     /** 
-     * Balances node at specified position
+     * Check if the node at specified position must be balanced and returns if
+     * it was
      */
-    void balance_node(int pos) {
+    bool balance_node(int pos) {
       Node node = read_node(pos);
       if (node.balance > 1) {
         if (read_node(node.right).balance < 0) {
@@ -351,7 +354,10 @@ class AvlDatabase
         } else {
           rotate_right(pos);
         }
+      } else {
+        return false;
       }
+      return true;
     }
     
     /** 
