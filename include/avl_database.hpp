@@ -108,6 +108,12 @@ class AvlDatabase
       return tree_file.tellg() == 0;
     }
 
+    void print_tree(std::ostream &os) {
+      os << "-----------------------------" << std::endl;
+      os << "Tree height: " << get_height() << std::endl;
+      print_tree_recursive(os, read_root_pos(), 0);
+      os << "-----------------------------" << std::endl;
+    }
 
   private:
     const int tree_file_offset = sizeof(int);
@@ -410,6 +416,29 @@ class AvlDatabase
       Node node = read_node(pos);
       rotate_left(node.left);
       rotate_right(pos);
+    }
+
+    /**
+     * Prints tree recursively
+     */
+    void print_tree_recursive(std::ostream& os, int pos, int space) {
+      if (pos == -1) {
+        return;
+      }
+
+      Node node = read_node(pos);
+      
+      space += 5;
+      print_tree_recursive(os, node.right, space);
+
+      os << std::endl;
+
+      for (int i = 5 ; i < space;  i++)
+        os << " ";
+
+      os << node.key  << " : " << node.balance << std::endl;
+
+      print_tree_recursive(os, node.left, space);
     }
 };
 
