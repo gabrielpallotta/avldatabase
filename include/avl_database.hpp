@@ -42,15 +42,15 @@ class AvlDatabase
      */
     AvlDatabase(std::string data_path, std::string tree_path) {
       // Create files if it doesn't exist
-      data_file = std::fstream(data_path, std::ios::app);
-      tree_file = std::fstream(tree_path, std::ios::app);
+      data_file.open(data_path, std::ios::app);
+      tree_file.open(tree_path, std::ios::app);
 
       data_file.close();
       tree_file.close();
       
       // Open files for reading / writing
-      data_file = std::fstream(data_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
-      tree_file = std::fstream(tree_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
+      data_file.open(data_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
+      tree_file.open(tree_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
     }
 
     /** 
