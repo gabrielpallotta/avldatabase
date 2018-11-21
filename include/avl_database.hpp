@@ -8,6 +8,13 @@
 
 /**
  * Struct for Node stored in a binary file
+ * 
+ * valid -> if the node is valid
+ * key -> the key which will be used to compare this node with others
+ * data_index -> the index of the data stored in this node
+ * balance -> left tree height - right tree height
+ * left -> left child index
+ * right -> right child index
  */
 typedef struct Node {
   int valid;
@@ -80,6 +87,7 @@ class AvlDatabase
      * @todo write stuff here
      */
     void remove(const K &key) {
+      // Throw exception if tree is empty
       if (is_empty()) {
         throw std::invalid_argument("No info matches key passed to remove()");
       }
@@ -172,32 +180,66 @@ class AvlDatabase
     }
 
     /**
-     * Removes info recursively from the tree
-     * Returns new child node index
+     * Removes info recursively from the tree.
+     *
+     * Returns new child node index (that the parent node that called this
+     * method should point to). 
+     *
+     * If the node doesn't have any childs, this will always return -1. 
+     *
+     * If it has childs, it will return the index to the biggest node from the
+     * left or the smallest node from the right.
      */
-    int remove_recursive(const K &key, int current_pos, *int balance_delta) {
+    int remove_recursive(const K &key, int current_pos, int* balance_delta) {
+      if (current_pos == -1) {
+          throw std::invalid_argument("Info not on tree");
+      }
       Node node = read_node(current_pos);
 
+      // If this node must be removed
       if (node.key == key) {
-        if (node.left != -1) {
-          int left_balance_delta;
-          return remove_recursive(get_smallest_key(node.left), node.left, &left_balance_delta);
+        if (node.left != -1) { 
+          int biggest_node_index = get_biggest_node_pos(node.left);
+          Node biggest_node = read_node(biggest_node_index);
+          node.data_index = biggest_node.data_index;
+          
+          int left_removal_balance_delta = 0;
+          remove_recursive(biggest_node.key, node.left, &left_removal_balance_delta);
+
+          // TODO: verify if this is working
+          // Maybe the balance delta isn't affected after a removal
+          // *balance_delta++;
         } else if (node.right != -1) {
-          int right_balance_delta;
-          return remove_recursive(get_biggest_key(node.right), node.right, &right_balance_delta);
+          int smallest_node_index = get_smallest_node_pos(node.right);
+          Node smallest_node = read_node(smallest_node_index);
+          node.data_index = smallest_node.data_index;
+          
+          int right_removal_balance_delta = 0;
+          remove_recursive(smallest_node.key, node.right, &right_removal_balance_delta);
+
+          // TODO: verify if this is working
+          // Maybe the balance delta isn't affected after a removal
+          // *balance_delta--;
         } else {
-          node.valid = -1;
-          update_node(current_pos, node);
+          delete_node(current_pos);
           return -1;
         }
       } else if (key > node.key) {
-        node.right = remove_recursive(key, node.right);
+        node.right = remove_recursive(key, node.right, balance_delta);
+        
+        if (node.right == -1) {
+          *balance_delta = -1;
+        }
       } else if (key < node.key) {
-        node.left = remove_recursive(key, node.left);
+        node.left = remove_recursive(key, node.left, balance_delta);
+        
+        if (node.left == -1) {
+          *balance_delta = 1;
+        }
       }
       
       // Update node balance
-      if (balance_delta != 0) {
+      if (*balance_delta != 0) {
         node.balance += *balance_delta;
       }
 
@@ -212,26 +254,26 @@ class AvlDatabase
     }
 
     /**
-     * Gets smallest key starting from node at position passed by parameter
+     * Gets smallest node index starting from node at position passed by parameter
      */ 
-    K get_smallest_key(int current_pos) {
+    K get_smallest_node_pos(int current_pos) {
       Node node = read_node(current_pos);
       if (node.left != -1) {
-        return get_smallest_key(node.left);
+        return get_smallest_node_pos(node.left);
       } else {
-        return node.key;
+        return current_pos;
       }
     }
 
     /**
      * Gets biggest key starting from node at position passed by parameter
      */ 
-    K get_biggest_key(int current_pos) {
+    K get_biggest_node_pos(int current_pos) {
       Node node = read_node(current_pos);
       if (node.right != -1) {
-        return get_biggest_key(node.right);
+        return get_biggest_node_pos(node.right);
       } else {
-        return node.key;
+        return current_pos;
       }
     }
 
@@ -280,6 +322,7 @@ class AvlDatabase
       if (is_empty()) {
         return -1;
       } else {
+        tree_file.clear();
         tree_file.seekg(0, std::ios::beg);
         int pos;
         tree_file >> pos;
@@ -353,6 +396,16 @@ class AvlDatabase
       tree_file.flush();
     }
 
+    /**
+     * Defines the node at specified position as invalid
+     */ 
+    void delete_node(int pos) {
+      Node invalid_node = Node();
+      invalid_node.valid = -1;
+      update_node(pos, invalid_node);
+    }
+    
+    
     /** 
      * Swap nodes of specified positions physically on tree_file
      */
@@ -501,6 +554,10 @@ class AvlDatabase
       }
 
       Node node = read_node(pos);
+
+      if (node.valid == -1) {
+        return;
+      }
       
       space += 5;
       print_tree_recursive(os, node.right, space);
