@@ -24,11 +24,21 @@ int main ()
   strcpy(jorge.name, "Jorge");
   jorge.ra = 16167;
 
-
   AvlDatabase<int, Student> students("data.bin", "tree.bin");
-  students.add(dario.ra, dario);
-  students.add(xerxes.ra, xerxes);
-  students.add(jorge.ra, jorge);
+
+  // Add 10 students to AvlDatabase
+  for (int i = 0; i < 10; i++) {
+    Student generic;
+    strcpy(generic.name, "Lorem Ipsum");
+    generic.ra = i;
+    students.add(generic.ra, generic);
+  }
+
+  students.print_tree(cout);
+  students.remove(9);
+  students.print_tree(cout);
+  students.remove(8);
+  students.print_tree(cout);
 
   return 0;
 }
