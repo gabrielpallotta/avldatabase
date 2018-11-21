@@ -10,7 +10,7 @@
  * Struct for Node stored in a binary file
  */
 typedef struct Node {
-  char valid;
+  int valid;
   int key;
   int data_index;
   int balance;
@@ -44,7 +44,6 @@ class AvlDatabase
       // Open files for reading / writing
       data_file = std::fstream(data_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
       tree_file = std::fstream(tree_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
-
     }
 
     /** 
@@ -73,7 +72,6 @@ class AvlDatabase
         write_data_node(key, info);
       } else {
         int balance_delta = 0;
-
         add_recursive(key, info, read_root_pos(), &balance_delta);
       }
     }
@@ -82,7 +80,11 @@ class AvlDatabase
      * @todo write stuff here
      */
     void remove(const K &key) {
-      
+      if (is_empty()) {
+        throw std::invalid_argument("No info matches key passed to remove()");
+      }
+      int balance_delta = 0;
+      write_root_pos(remove_recursive(key, read_root_pos(), &balance_delta));
     }
 
     /** 
@@ -170,11 +172,75 @@ class AvlDatabase
     }
 
     /**
+     * Removes info recursively from the tree
+     * Returns new child node index
+     */
+    int remove_recursive(const K &key, int current_pos, *int balance_delta) {
+      Node node = read_node(current_pos);
+
+      if (node.key == key) {
+        if (node.left != -1) {
+          int left_balance_delta;
+          return remove_recursive(get_smallest_key(node.left), node.left, &left_balance_delta);
+        } else if (node.right != -1) {
+          int right_balance_delta;
+          return remove_recursive(get_biggest_key(node.right), node.right, &right_balance_delta);
+        } else {
+          node.valid = -1;
+          update_node(current_pos, node);
+          return -1;
+        }
+      } else if (key > node.key) {
+        node.right = remove_recursive(key, node.right);
+      } else if (key < node.key) {
+        node.left = remove_recursive(key, node.left);
+      }
+      
+      // Update node balance
+      if (balance_delta != 0) {
+        node.balance += *balance_delta;
+      }
+
+      update_node(current_pos, node);
+
+      // Balance the node
+      if (balance_node(current_pos)) {
+        *balance_delta = 0;
+      }
+      
+      return current_pos;
+    }
+
+    /**
+     * Gets smallest key starting from node at position passed by parameter
+     */ 
+    K get_smallest_key(int current_pos) {
+      Node node = read_node(current_pos);
+      if (node.left != -1) {
+        return get_smallest_key(node.left);
+      } else {
+        return node.key;
+      }
+    }
+
+    /**
+     * Gets biggest key starting from node at position passed by parameter
+     */ 
+    K get_biggest_key(int current_pos) {
+      Node node = read_node(current_pos);
+      if (node.right != -1) {
+        return get_biggest_key(node.right);
+      } else {
+        return node.key;
+      }
+    }
+
+    /**
      * Gets info recursively from the tree 
      */
     T get_info_recursive(const K &key, int current_pos) {
       if (current_pos == -1) {
-        throw std::invalid_argument("No info matches key passed to get_info");
+        throw std::invalid_argument("No info matches key passed to get_info()");
       }
 
       Node node = read_node(current_pos);
@@ -280,7 +346,7 @@ class AvlDatabase
      */
     void update_node(int pos, Node node) {
       Node* node_ptr = new Node(node);
-
+      
       tree_file.clear();
       tree_file.seekp(tree_file_offset + pos * sizeof(Node), std::ios::beg);
       tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
@@ -376,6 +442,7 @@ class AvlDatabase
       new_root.left = old_root_pos;
       old_root.right = new_root_left_pos;
 
+      // Adjust old and new root balances dynamically
       old_root.balance = old_root.balance - 1 - std::max(new_root.balance, 0);
       new_root.balance = new_root.balance - 1 + std::min(old_root.balance, 0);
 
@@ -399,6 +466,7 @@ class AvlDatabase
       new_root.right = old_root_pos;
       old_root.left = new_root_right_pos;
 
+      // Adjust old and new root balances dynamically
       old_root.balance = old_root.balance + 1 - std::min(new_root.balance, 0);
       new_root.balance = new_root.balance + 1 + std::max(old_root.balance, 0);
 
