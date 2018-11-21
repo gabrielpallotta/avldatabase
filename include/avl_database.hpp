@@ -84,7 +84,7 @@ class AvlDatabase
     }
 
     /** 
-     * @todo write stuff here
+     * Removes info from tree
      */
     void remove(const K &key) {
       // Throw exception if tree is empty
@@ -96,9 +96,9 @@ class AvlDatabase
     }
 
     /** 
-     * @todo write stuff here
+     * Gets info from tree
      */
-    T get_info(const K &key) {
+    T get(const K &key) {
       return get_info_recursive(key, read_root_pos());
     }
 
