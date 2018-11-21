@@ -353,7 +353,7 @@ class AvlDatabase
       tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
       tree_file.flush();
 
-      return (tree_file.tellg() - tree_file_offset) / sizeof(Node) - 1;
+      return ((int)(tree_file.tellg()) - tree_file_offset) / sizeof(Node) - 1;
     }
 
     /**
