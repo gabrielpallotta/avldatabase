@@ -91,8 +91,8 @@ class AvlDatabase
       if (is_empty()) {
         throw std::invalid_argument("No info matches key passed to remove()");
       }
-      int balance_delta = 0;
-      write_root_pos(remove_recursive(key, read_root_pos(), &balance_delta));
+      
+      write_root_pos(remove_recursive(key, read_root_pos()));
     }
 
     /** 
@@ -190,65 +190,50 @@ class AvlDatabase
      * If it has childs, it will return the index to the biggest node from the
      * left or the smallest node from the right.
      */
-    int remove_recursive(const K &key, int current_pos, int* balance_delta) {
+    int remove_recursive(const K &key, int current_pos) {
       if (current_pos == -1) {
           throw std::invalid_argument("Info not on tree");
       }
+
       Node node = read_node(current_pos);
 
       // If this node must be removed
       if (node.key == key) {
         if (node.left != -1) { 
-          int biggest_node_index = get_biggest_node_pos(node.left);
-          Node biggest_node = read_node(biggest_node_index);
+          Node biggest_node = read_node(get_biggest_node_pos(node.left));
+          
+          remove_recursive(biggest_node.key, current_pos);
+
+          if (read_node(node.left).valid == -1) {
+            node.left = -1;
+          }
+
+          node.key = biggest_node.key;
           node.data_index = biggest_node.data_index;
-          
-          int left_removal_balance_delta = 0;
-          remove_recursive(biggest_node.key, node.left, &left_removal_balance_delta);
-
-          // TODO: verify if this is working
-          // Maybe the balance delta isn't affected after a removal
-          // *balance_delta++;
         } else if (node.right != -1) {
-          int smallest_node_index = get_smallest_node_pos(node.right);
-          Node smallest_node = read_node(smallest_node_index);
-          node.data_index = smallest_node.data_index;
+          Node smallest_node = read_node(get_smallest_node_pos(node.right));
           
-          int right_removal_balance_delta = 0;
-          remove_recursive(smallest_node.key, node.right, &right_removal_balance_delta);
+          remove_recursive(smallest_node.key, current_pos);
+          
+          if (read_node(node.right).valid == -1) {
+            node.right = -1;
+          }
 
-          // TODO: verify if this is working
-          // Maybe the balance delta isn't affected after a removal
-          // *balance_delta--;
+          node.key = smallest_node.key;
+          node.data_index = smallest_node.data_index;
         } else {
           delete_node(current_pos);
           return -1;
         }
       } else if (key > node.key) {
-        node.right = remove_recursive(key, node.right, balance_delta);
-        
-        if (node.right == -1) {
-          *balance_delta = -1;
-        }
+        node.right = remove_recursive(key, node.right);
       } else if (key < node.key) {
-        node.left = remove_recursive(key, node.left, balance_delta);
-        
-        if (node.left == -1) {
-          *balance_delta = 1;
-        }
+        node.left = remove_recursive(key, node.left);
       }
       
-      // Update node balance
-      if (*balance_delta != 0) {
-        node.balance += *balance_delta;
-      }
-
+      node.balance = get_node_balance(current_pos);
       update_node(current_pos, node);
-
-      // Balance the node
-      if (balance_node(current_pos)) {
-        *balance_delta = 0;
-      }
+      balance_node(current_pos);
       
       return current_pos;
     }
@@ -438,11 +423,14 @@ class AvlDatabase
 
       Node node = read_node(pos);
 
+      if (node.valid == -1) {
+         return 0;
+      }
+
       return std::max(get_node_height(node.right), get_node_height(node.left)) + 1;
     }
 
     /** 
-     * @deprecated node balance is calculated dynamically
      * Gets balance of node at specified position
      */
     int get_node_balance(int pos) {
@@ -452,7 +440,7 @@ class AvlDatabase
 
       Node node = read_node(pos);
 
-      return (get_node_height(node.left) - get_node_height(node.right));
+      return (get_node_height(node.right) - get_node_height(node.left));
     }
 
     /** 
@@ -556,6 +544,7 @@ class AvlDatabase
       Node node = read_node(pos);
 
       if (node.valid == -1) {
+        os << "INVALID NODE" << std::endl;
         return;
       }
       
@@ -564,11 +553,12 @@ class AvlDatabase
 
       os << std::endl;
 
-      for (int i = 5 ; i < space;  i++)
+      for (int i = 5 ; i < space;  i++) {
         os << " ";
+      }
 
       os << node.key  << " : " << node.balance << std::endl;
-
+    
       print_tree_recursive(os, node.left, space);
     }
 };

@@ -39,6 +39,10 @@ int main ()
   students.print_tree(cout);
   students.remove(8);
   students.print_tree(cout);
+  students.remove(7);
+  students.print_tree(cout);
+  students.remove(6);
+  students.print_tree(cout);
 
   return 0;
 }
