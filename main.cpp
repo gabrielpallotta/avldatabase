@@ -1,48 +1,74 @@
-#include <cstring>
 #include <iostream>
+#include <stdlib.h>
+
+#ifdef _WIN32
+  #define CLEAR_CMD "cls"
+#elif _WIN64
+  #define CLEAR_CMD "cls"
+#elif __linux__
+  #define CLEAR_CMD "clear"
+#endif
 
 #include "avl_database.hpp"
 
 using namespace std;
 
-typedef struct Student {
-  char name[20];
-  int ra;
-} Student;
-
-int main ()
+int main()
 {
-  Student dario;
-  strcpy(dario.name, "Dario");
-  dario.ra = 16168;
+  AvlDatabase<int, int> tree("data.bin", "tree.bin");
 
-  Student xerxes;
-  strcpy(xerxes.name, "Xerxes");
-  xerxes.ra = 16169;
+  while (true) {
+    system(CLEAR_CMD);
+    cout << "Arvore AVL (guardada em disco):" << endl;
+    tree.print(cout);
 
-  Student jorge;
-  strcpy(jorge.name, "Jorge");
-  jorge.ra = 16167;
+    cout << "1 - Inserir" << endl;
+    cout << "2 - Remover" << endl;
+    cout << "3 - Consulta" << endl << endl;
+    cout << "Digite uma opcao: ";
 
-  AvlDatabase<int, Student> students("data.bin", "tree.bin");
+    int option;
+    cin >> option;
 
-  // Add 10 students to AvlDatabase
-  for (int i = 0; i < 10; i++) {
-    Student generic;
-    strcpy(generic.name, "Lorem Ipsum");
-    generic.ra = i;
-    students.add(generic.ra, generic);
+    int value;
+    switch (option) {
+      case 1:
+        cout << "Digite o valor que deseja inserir: ";
+        cin >> value;
+        cout << endl;
+        try {
+          tree.add(value, value);
+          cout << "Valor inserido com sucesso" ;
+        } catch (invalid_argument e) {
+          cout << "Valor ja existe na arvore";
+        }
+        break;
+      case 2:
+        cout << "Digite o valor que deseja remover: ";
+        cin >> value;
+        cout << endl;
+        try {
+          tree.remove(value);
+          cout << "Valor removido com sucesso";
+        } catch (invalid_argument e) {
+          cout << "Valor nao existe na arvore";
+        }
+        break;
+      case 3:
+        cout << "Digite o valor que deseja consultar: ";
+        cin >> value;
+        cout << endl;
+        int tree_value = tree.get(value);
+        if (tree_value) {
+          cout << "Valor encontrado: " << tree_value;
+        } else {
+          cout << "Valor nao encontrado na arvore";
+        }
+        break;
+    }
+    cout << endl << endl;
+    cout << "Pressione qualquer tecla para continuar...";
+    cin.sync();
+    cin.ignore();
   }
-
-  students.print_tree(cout);
-  students.remove(9);
-  students.print_tree(cout);
-  students.remove(8);
-  students.print_tree(cout);
-  students.remove(7);
-  students.print_tree(cout);
-  students.remove(6);
-  students.print_tree(cout);
-
-  return 0;
 }
