@@ -78,8 +78,7 @@ class AvlDatabase
         write_root_pos(0);
         write_data_node(key, info);
       } else {
-        int balance_delta = 0;
-        add_recursive(key, info, read_root_pos(), &balance_delta);
+        add_recursive(key, info, read_root_pos());
       }
     }
 
@@ -136,7 +135,7 @@ class AvlDatabase
      * First current_pos passed is root_pos, if the tree is empty, this method
      * cannot be called
      */
-    void add_recursive(const K &key, const T &info, int current_pos, int* balance_delta) {
+    void add_recursive(const K &key, const T &info, int current_pos) {
       // Get current node
       Node node = read_node(current_pos);
 
@@ -146,37 +145,25 @@ class AvlDatabase
       } else if (key > node.key) {
         // Insert to right
         if (node.right == -1) {
-          if (node.left == -1) {
-            *balance_delta = 1;
-          }
           node.right = write_data_node(key, info);
           update_node(current_pos, node);
         } else {
-          add_recursive(key, info, node.right, balance_delta);
+          add_recursive(key, info, node.right);
         }
       } else if (key < node.key) {
         // Insert to left
         if (node.left == -1) {
-          if (node.right == -1) {
-            *balance_delta = -1;
-          }
           node.left = write_data_node(key, info);
           update_node(current_pos, node);
         } else {
-          add_recursive(key, info, node.left, balance_delta);
+          add_recursive(key, info, node.left);
         }
       }
       
       // Update node balance
-      if (balance_delta != 0) {
-        node.balance += *balance_delta;
-        update_node(current_pos, node);
-      }
-
-      // Balance the node
-      if (balance_node(current_pos)) {
-        *balance_delta = 0;
-      }
+      node.balance = get_node_balance(current_pos);
+      update_node(current_pos, node);
+      balance_node(current_pos);
     }
 
     /**
