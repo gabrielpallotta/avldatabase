@@ -117,10 +117,10 @@ class AvlDatabase
       return tree_file.tellg() == 0;
     }
 
-    void print_tree(std::ostream &os) {
+    void print(std::ostream &os) {
       os << "-----------------------------" << std::endl;
       os << "Tree height: " << get_height() << std::endl;
-      print_tree_recursive(os, read_root_pos(), 0);
+      print_recursive(os, read_root_pos(), 0);
       os << "-----------------------------" << std::endl;
     }
 
@@ -377,7 +377,6 @@ class AvlDatabase
       update_node(pos, invalid_node);
     }
     
-    
     /** 
      * Swap nodes of specified positions physically on tree_file
      */
@@ -523,7 +522,7 @@ class AvlDatabase
     /**
      * Prints tree recursively
      */
-    void print_tree_recursive(std::ostream& os, int pos, int space) {
+    void print_recursive(std::ostream& os, int pos, int space) {
       if (pos == -1) {
         return;
       }
@@ -536,7 +535,7 @@ class AvlDatabase
       }
       
       space += 5;
-      print_tree_recursive(os, node.right, space);
+      print_recursive(os, node.right, space);
 
       os << std::endl;
 
@@ -546,7 +545,7 @@ class AvlDatabase
 
       os << node.key  << " : " << node.balance << std::endl;
     
-      print_tree_recursive(os, node.left, space);
+      print_recursive(os, node.left, space);
     }
 };
 
