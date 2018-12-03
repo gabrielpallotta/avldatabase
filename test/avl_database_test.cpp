@@ -22,11 +22,54 @@ bool validHeight(int n, int height) {
   return true;
 }
 
-TEST(AvlDatabaseTest, InsertsAndGetsValue) {
-  tree.add(0, 0);
-  ASSERT_EQ(0, tree.get(0));
-  tree.add(-1, -1);
-  ASSERT_EQ(-1, tree.get(-1));
-  tree.add(1, 1);
-  ASSERT_EQ(1, tree.get(1));
+// TEST(AvlDatabaseTest, InsertsAndGetsValue) {
+//   tree.add(0, 0);
+//   ASSERT_EQ(0, tree.get(0));
+//   tree.add(-1, -1);
+//   ASSERT_EQ(-1, tree.get(-1));
+//   tree.add(1, 1);
+//   ASSERT_EQ(1, tree.get(1));
+// }
+
+TEST(AvlDatabaseTest, BalancesOnAscendingInsertionAndRemoval) {
+  int total = 0;
+
+  vector<int> values;
+  for (int i = -100; i <= 100; i++) {
+    values.push_back(i);
+  }
+
+  for (auto value : values) {
+    tree.add(value, value);
+    total++;
+    ASSERT_TRUE(validHeight(total, tree.get_height()));
+  }
+
+  for (auto value : values) {
+    tree.remove(value);
+    total--;
+    ASSERT_TRUE(validHeight(total, tree.get_height()));
+  }
+}
+
+
+TEST(AvlDatabaseTest, BalancesOnDescendingInsertionAndRemoval) {
+  int total = 0;
+
+  vector<int> values;
+  for (int i = 100; i >= -100; i--) {
+    values.push_back(i);
+  }
+
+  for (auto value : values) {
+    tree.add(value, value);
+    total++;
+    ASSERT_TRUE(validHeight(total, tree.get_height()));
+  }
+
+  for (auto value : values) {
+    tree.remove(value);
+    total--;
+    ASSERT_TRUE(validHeight(total, tree.get_height()));
+  }
 }
