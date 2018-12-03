@@ -51,6 +51,10 @@ class AvlDatabase
       // Open files for reading / writing
       data_file.open(data_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
       tree_file.open(tree_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
+
+      if (tree_is_empty()) {
+        write_root_pos(-1);
+      }
     }
 
     /** 
@@ -74,9 +78,8 @@ class AvlDatabase
      */
     void add(const K &key, const T &info) {      
       // If tree is empty, first insertion
-      if (is_empty()) {
-        write_root_pos(0);
-        write_data_node(key, info);
+      if (tree_is_empty()) {
+        write_root_pos(write_data_node(key, info));
       } else {
         add_recursive(key, info, read_root_pos());
       }
@@ -87,11 +90,12 @@ class AvlDatabase
      */
     void remove(const K &key) {
       // Throw exception if tree is empty
-      if (is_empty()) {
+      if (tree_is_empty()) {
         throw std::invalid_argument("No info matches key passed to remove()");
       }
       
-      write_root_pos(remove_recursive(key, read_root_pos()));
+      int new_root_pos = remove_recursive(key, read_root_pos());
+      write_root_pos(new_root_pos);
     }
 
     /** 
@@ -113,8 +117,8 @@ class AvlDatabase
      * @return true if the tree is empty
      * @return false if the tree is not empty
      */
-    bool is_empty() {
-      return tree_file.tellg() == 0;
+    bool tree_is_empty() {
+      return tree_file.tellg() == 0 || read_root_pos() == -1;
     }
 
     void print(std::ostream &os) {
@@ -179,7 +183,7 @@ class AvlDatabase
      */
     int remove_recursive(const K &key, int current_pos) {
       if (current_pos == -1) {
-          throw std::invalid_argument("Info not on tree");
+        throw std::invalid_argument("Info not on tree");
       }
 
       Node node = read_node(current_pos);
@@ -291,15 +295,12 @@ class AvlDatabase
      * Reads root position from the start of tree_file and returns it
     */
     int read_root_pos() {
-      if (is_empty()) {
-        return -1;
-      } else {
-        tree_file.clear();
-        tree_file.seekg(0, std::ios::beg);
-        int pos;
-        tree_file >> pos;
-        return pos;
-      }
+      tree_file.clear();
+      tree_file.seekg(0, std::ios::beg);
+      int pos;
+      tree_file.read(reinterpret_cast<char*>(&pos), sizeof(int));
+      // tree_file >> pos;
+      return pos;
     }
 
     /**
