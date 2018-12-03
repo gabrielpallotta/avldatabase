@@ -443,7 +443,7 @@ class AvlDatabase
           rotate_left(pos);
         }
       } else if (node.balance < -1) {
-        if (read_node(node.right).balance > 0) {
+        if (read_node(node.left).balance > 0) {
           rotate_double_right(pos);
         } else {
           rotate_right(pos);
