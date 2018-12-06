@@ -28,8 +28,8 @@ typedef struct Node {
 /**
  * Implementation of a database using AvlTree concepts and binary files
  * 
- * @tparam K the type of the key used to compare infos
- * @tparam T the type of the info stored
+ * @tparam K The type of the key used to compare infos
+ * @tparam T The type of the info stored
  */
 template <typename K, typename T>
 class AvlDatabase
@@ -65,7 +65,6 @@ class AvlDatabase
      */
     ~AvlDatabase() {
       // ...
-      
       data_file.close();
       tree_file.close();
     }
@@ -113,7 +112,14 @@ class AvlDatabase
     }
 
     /**
-     * Check if the tree is empty
+     * Gets how many valid and invalid nodes are 
+     */
+    int get_node_count() {
+      return ((int)(tree_file.tellg()) - tree_file_offset) / sizeof(Node);
+    }
+
+    /**
+     * Checks if the tree is empty
      * @return true if the tree is empty
      * @return false if the tree is not empty
      */
@@ -121,6 +127,10 @@ class AvlDatabase
       return tree_file.tellg() == 0 || read_root_pos() == -1;
     }
 
+    /**
+     * Prints the tree
+     * @param os The output stream to print the tree
+     */
     void print(std::ostream &os) {
       os << "-----------------------------" << std::endl;
       os << "Tree height: " << get_height() << std::endl;
@@ -336,12 +346,14 @@ class AvlDatabase
     int write_node(Node node) {
       Node* node_ptr = new Node(node);
       
+      int insertion_position = get_node_insertion_position();
+
       tree_file.clear();
-      tree_file.seekp(0, std::ios::end);
+      tree_file.seekp(insertion_position * sizeof(Node), std::ios::beg);
       tree_file.write(reinterpret_cast<char*>(node_ptr), sizeof(Node));
       tree_file.flush();
 
-      return ((int)(tree_file.tellg()) - tree_file_offset) / sizeof(Node) - 1;
+      return get_node_count() - 1;
     }
 
     /**
@@ -398,6 +410,22 @@ class AvlDatabase
 
       update_node(pos_a, node_b);
       update_node(pos_b, node_a);
+    }
+
+    /**
+     * Gets the index of the first invalid block or the tree file end
+     */
+    int get_node_insertion_position() {
+      int node_count = get_node_count();
+      
+      for(int i = 0; i < node_count; i++) {
+        Node node = read_node(i);
+        if (node.valid == -1) {
+          return i;
+        }
+      }
+      
+      return node_count;
     }
 
     /** 
@@ -531,7 +559,7 @@ class AvlDatabase
       Node node = read_node(pos);
 
       if (node.valid == -1) {
-        os << "INVALID NODE" << std::endl;
+        os << "INVALID NODE (this shouldn't happen)" << std::endl;
         return;
       }
       
