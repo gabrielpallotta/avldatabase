@@ -33,17 +33,15 @@ typedef struct Node {
  * @tparam T The type of the info stored
  */
 template <typename K, typename T>
-class AvlDatabase
-{
+class AvlDatabase {
   public:
     /** 
      * AvlDatabase constructor
      * @param data_path path to the data binary file
      * @param tree_path path to the tree binary file
      */
-    AvlDatabase(std::string data_path, std::string tree_path) {
-      data_storage = BinaryStorage<T>(data_path, 0);
-      node_storage = BinaryStorage<Node>(tree_path, 1);
+    AvlDatabase(std::string data_path, std::string tree_path)
+      : data_storage(data_path, 0), node_storage(tree_path, 1) {
       if (tree_is_empty()) {
         write_root_pos(-1);
       }
@@ -358,7 +356,7 @@ class AvlDatabase
       Node old_root = node_storage.read(pos).data;
       node_storage.swap(pos, old_root.left);
       Node new_root = node_storage.read(pos).data;
-      
+
       int old_root_pos = old_root.left;
       int new_root_right_pos = new_root.right;
 

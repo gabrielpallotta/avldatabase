@@ -43,8 +43,6 @@ class FlaggedBlock {
 template <typename T>
 class BinaryStorage {
   public:
-    BinaryStorage() { }
-  
     BinaryStorage(std::string path, int number_of_flags) {
       this->number_of_flags = number_of_flags;
 
